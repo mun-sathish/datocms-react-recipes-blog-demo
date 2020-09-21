@@ -18,9 +18,17 @@ import {
 // 4. Click the back button, note the URL each time
 
 function AuthExample() {
+  console.log("User");
   return (
     <Router>
       <div>
+        <button
+          onClick={() => {
+            netlifyIdentity.refresh().then((jwt) => console.log(jwt));
+          }}
+        >
+          Refresh JWT
+        </button>
         <AuthButton />
         <ul>
           <li>
@@ -39,18 +47,17 @@ function AuthExample() {
 }
 
 const netlifyAuth = {
-  isAuthenticated: false,
+  isAuthenticated: () => (netlifyIdentity.currentUser() ? true : false),
   user: null,
   authenticate(callback) {
-    this.isAuthenticated = true;
     netlifyIdentity.open();
     netlifyIdentity.on("login", (user) => {
       this.user = user;
+      netlifyIdentity.close();
       callback(user);
     });
   },
   signout(callback) {
-    this.isAuthenticated = false;
     netlifyIdentity.logout();
     netlifyIdentity.on("logout", () => {
       this.user = null;
@@ -60,7 +67,7 @@ const netlifyAuth = {
 };
 
 const AuthButton = withRouter(({ history }) =>
-  netlifyAuth.isAuthenticated ? (
+  netlifyAuth.isAuthenticated() ? (
     <p>
       Welcome!{" "}
       <button
@@ -77,12 +84,12 @@ const AuthButton = withRouter(({ history }) =>
 );
 
 function PrivateRoute({ component: Component, ...rest }) {
-  console.log("netlifyAuth.isAuthenticated", netlifyAuth.isAuthenticated);
+  console.log("netlifyAuth.isAuthenticated", netlifyAuth.isAuthenticated());
   return (
     <Route
       {...rest}
       render={(props) =>
-        netlifyAuth.isAuthenticated ? (
+        netlifyAuth.isAuthenticated() ? (
           <Component {...props} />
         ) : (
           <Redirect
