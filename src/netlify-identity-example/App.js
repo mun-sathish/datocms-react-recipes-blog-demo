@@ -17,8 +17,12 @@ import {
 // 3. Log in
 // 4. Click the back button, note the URL each time
 
+const BASE_URI = "/.netlify/functions";
+const URI = {
+  HELLO: `${BASE_URI}/hello`,
+};
+
 function AuthExample() {
-  console.log("User");
   return (
     <Router>
       <div>
@@ -48,7 +52,7 @@ function AuthExample() {
 
 const netlifyAuth = {
   isAuthenticated: () => (netlifyIdentity.currentUser() ? true : false),
-  user: null,
+  user: () => netlifyIdentity.currentUser(),
   authenticate(callback) {
     netlifyIdentity.open();
     netlifyIdentity.on("login", (user) => {
@@ -84,7 +88,6 @@ const AuthButton = withRouter(({ history }) =>
 );
 
 function PrivateRoute({ component: Component, ...rest }) {
-  console.log("netlifyAuth.isAuthenticated", netlifyAuth.isAuthenticated());
   return (
     <Route
       {...rest}
@@ -106,6 +109,34 @@ function PrivateRoute({ component: Component, ...rest }) {
 
 class Login extends React.Component {
   state = { redirectToReferrer: false };
+
+  handleErrors = (response) => {
+    if (!response.ok) {
+      throw Error(response.statusText);
+    }
+    return response.json();
+  };
+
+  generateAuthHeader = (body, method = "GET") => {
+    const token =
+      netlifyAuth.user().token && netlifyAuth.user().token["access_token"];
+    const modified_header = {
+      method,
+      body: body ? JSON.stringify(body) : null,
+      headers: {
+        Authorization: `Bearer avopsjrepfjser;goserjg;oijo;i${token}awfewefawwec;lokfoapwoejfoiwjoi`,
+      },
+    };
+    return modified_header;
+  };
+
+  componentDidMount() {
+    console.log("User", netlifyAuth.user());
+    fetch(URI.HELLO, this.generateAuthHeader(null))
+      .then(this.handleErrors)
+      .then((res) => console.log("Function Res", res))
+      .catch((err) => console.log("ERR:", err));
+  }
 
   login = () => {
     netlifyAuth.authenticate(() => {
