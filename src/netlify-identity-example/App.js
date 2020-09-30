@@ -131,11 +131,15 @@ class Login extends React.Component {
   };
 
   componentDidMount() {
-    console.log("User", netlifyAuth.user());
-    fetch(URI.HELLO, this.generateAuthHeader(null))
-      .then(this.handleErrors)
-      .then((res) => console.log("Function Res", res))
-      .catch((err) => console.log("ERR:", err));
+    if (netlifyAuth.isAuthenticated()) {
+      console.log("User", netlifyAuth.user());
+      fetch(URI.HELLO, this.generateAuthHeader(null))
+        .then(this.handleErrors)
+        .then((res) => console.log("Function Res", res))
+        .catch((err) => console.log("ERR:", err));
+    } else {
+      console.log("Not authenticated, so cannot call netlify functions");
+    }
   }
 
   login = () => {
